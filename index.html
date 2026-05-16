@@ -605,28 +605,18 @@
                 if(np === '123456') return Swal.fire('Error', 'Pilih password yang berbeda dengan password default!', 'warning');
                 
                 showFullPageLoading('Menyimpan password baru...');
-                if(typeof google === 'undefined') {
-                    setTimeout(function() {
-                        hideFullPageLoading();
+                gasRun('changeFirstPassword', tempAuth.u, tempAuth.p, np).then(function(res) {
+                    hideFullPageLoading();
+                    if(res.success) {
                         var m = bootstrap.Modal.getInstance(document.getElementById('modalGantiPassword'));
                         if(m) m.hide();
-                        Swal.fire('Berhasil', 'Password telah diganti (Simulasi). Silakan login ulang.', 'success');
-                        document.getElementById('password').value = '';
-                    }, 1000);
-                } else {
-                    gasRun('changeFirstPassword', tempAuth.u, tempAuth.p, np).then(function(res) {
-                        hideFullPageLoading();
-                        if(res.success) {
-                            var m = bootstrap.Modal.getInstance(document.getElementById('modalGantiPassword'));
-                            if(m) m.hide();
-                            Auth.login(res.token, res.user, _authKey);
-                            checkLoginState();
-                            Swal.fire({icon:'success', title:'Berhasil', text:'Password berhasil diubah!', timer:2000, showConfirmButton:false});
-                        } else {
-                            Swal.fire('Error', res.message, 'error');
-                        }
-                    }).catch(function(err){ hideFullPageLoading(); Swal.fire('Error', err.message, 'error'); });
-                }
+                        Auth.login(res.token, res.user, _authKey);
+                        checkLoginState();
+                        Swal.fire({icon:'success', title:'Berhasil', text:'Password berhasil diubah!', timer:2000, showConfirmButton:false});
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                }).catch(function(err){ hideFullPageLoading(); Swal.fire('Error', err.message, 'error'); });
             });
 
             var formUser = document.getElementById('formUser');
@@ -1248,30 +1238,23 @@ function renderDplReport() {
             var m = bootstrap.Modal.getInstance(document.getElementById('modalNilai'));
             if(m) m.hide();
 
-            if (typeof google === 'undefined') {
-                setTimeout(function() {
-                    if(mhsItem) { 
-                        delete mhsItem._isSyncing; 
-                        if(isDraft) mhsItem[role==='DPL'?'dpl_draft':'gp_draft'] = payload.draftSelections;
-                        else mhsItem[role==='DPL'?'dpl_total':'gp_total'] = '85.50'; 
+            gasRun('loginUser', u, p).then(function(res) {
+                    hideFullPageLoading();
+                    if (res.success) {
+                        if (res.requirePasswordChange) {
+                            tempAuth = { u: u, p: p };
+                            new bootstrap.Modal(document.getElementById('modalGantiPassword')).show();
+                        } else {
+                            Auth.login(res.token, res.user, _authKey);
+                            checkLoginState();
+                        }
+                    } else {
+                        Swal.fire('Gagal', res.message, 'error');
                     }
-                    renderAssessorDashboard();
-                    Swal.fire({icon:'success', title:isDraft?'Draft Tersimpan':'Tersimpan Final', toast:true, position:'top-end', showConfirmButton:false, timer:1500});
-                }, 1000);
-            } else {
-                gasRun('saveNilai', Auth.getToken(), payload).then(function(res){
-                    if(handleSessionExpired(res)) return;
-                    if(res.success) {
-                        Swal.fire({icon:'success', title:isDraft?'Draft Tersimpan':'Tersimpan Final', toast:true, position:'top-end', showConfirmButton:false, timer:1500});
-                        loadPageData('page-assessor', true);
-                    } else { 
-                        if(mhsItem) delete mhsItem._isSyncing; 
-                        renderAssessorDashboard(); Swal.fire('Error', res.message, 'error'); 
-                    }
-                }).catch(function(err){
-                    if(mhsItem) delete mhsItem._isSyncing; renderAssessorDashboard(); Swal.fire('Error', err.message, 'error');
+                }).catch(function(err) {
+                    hideFullPageLoading();
+                    Swal.fire('Error', err.message, 'error');
                 });
-            }
         };
 
         window.validateNilai = function(mhsUsername) {
