@@ -484,7 +484,7 @@
         }
 
         // URL Web App dari Google Apps Script SIAP PLP
-        const API_URL = "https://script.google.com/a/macros/fkip.unsika.ac.id/s/AKfycbxXAoqLKcE0RdiICsIIy0AgBGDqouQzitMCWoKfvW6YtwG3MYQ4EoNlxupp3L30L_Q/exec";
+        const API_URL = "https://script.google.com/a/macros/fkip.unsika.ac.id/s/AKfycbyJ8Y_JxAgKsUB7SxOapE1hYqp257CMFy-kzoGhc0Tsd4lxuseQt5t0E8x9Iq_mkCM/exec";
 
         function gasRun(funcName) {
             var args = Array.prototype.slice.call(arguments, 1);
@@ -600,8 +600,8 @@
             var formGantiPw = document.getElementById('formGantiPassword');
             if(formGantiPw) formGantiPw.addEventListener('submit', function(e) {
                 e.preventDefault();
-                var np = document.getElementById('newPassword').value;
-                var cp = document.getElementById('confirmPassword').value;
+                var np = document.getElementById('newPassword').value.trim();
+                var cp = document.getElementById('confirmPassword').value.trim();
                 if(np !== cp) return Swal.fire('Error', 'Konfirmasi password tidak cocok!', 'warning');
                 if(np === '123456') return Swal.fire('Error', 'Pilih password yang berbeda dengan password default!', 'warning');
                 
