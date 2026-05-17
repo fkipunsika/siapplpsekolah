@@ -827,7 +827,7 @@
             Swal.fire({title:'Hapus pengguna?', icon:'warning', showCancelButton:true, confirmButtonText:'Hapus', confirmButtonColor:'#d33'}).then(function(r) {
                 if(r.isConfirmed) {
                     var backup = JSON.parse(JSON.stringify(appData.users));
-                    appData.users = appData.users.filter(function(x){return x.username !== username});
+                    appData.users = appData.users.filter(function(x){return String(x.username) !== String(username)});
                     renderAdminDashboard();
                     if(typeof google !== 'undefined') {
                         gasRun('deleteUser', Auth.getToken(), username).then(function(res){
@@ -1128,7 +1128,7 @@ function renderDplReport() {
 
             // PERBAIKAN: Ambil data draft SEBELUM menggambar HTML
             var draftObj = {};
-            var mhsItem = appData.mhsList.find(function(x){return x.username === mhsUsername});
+            var mhsItem = appData.mhsList.find(function(x){return String(x.username) === String(mhsUsername)});
             if (mhsItem) {
                 var draftStr = role === 'DPL' ? mhsItem.dpl_draft : mhsItem.gp_draft;
                 if (draftStr) {
@@ -1247,8 +1247,7 @@ function renderDplReport() {
             }
             
             payload.draftSelections = JSON.stringify(payload.draftSelections);
-
-            var mhsItem = appData.mhsList.find(function(x){return x.username === mhs});
+            var mhsItem = appData.mhsList.find(function(x){return String(x.username) === String(mhs)});
             if(mhsItem) mhsItem._isSyncing = true;
             renderAssessorDashboard();
             
@@ -1283,12 +1282,11 @@ function renderDplReport() {
 
         window.validateNilai = function(mhsUsername) {
             if (!Auth.isVerified() || Auth.getRole() !== 'DPL') return;
-            var mhsItem = appData.mhsList.find(function(x){return x.username === mhsUsername});
+            var mhsItem = appData.mhsList.find(function(x){return String(x.username) === String(mhsUsername)});
             
-            if (!mhsItem.dpl_total || !mhsItem.gp_total) {
+            if (!mhsItem || !mhsItem.dpl_total || !mhsItem.gp_total) {
                 return Swal.fire('Gagal', 'DPL dan Guru Pamong harus melakukan Simpan Final terlebih dahulu sebelum bisa divalidasi.', 'error');
             }
-
             Swal.fire({
                 title: 'Validasi Nilai Akhir?',
                 text: "Nilai tidak dapat diubah lagi. Mahasiswa akan dapat melihat Nilai Akhir mereka.",
@@ -1308,13 +1306,15 @@ function renderDplReport() {
                         gasRun('validateNilaiAkhir', Auth.getToken(), mhsUsername).then(function(res){
                             if(handleSessionExpired(res)) return;
                             if(res.success) loadPageData('page-assessor', true);
-                            else { if(mhsItem) delete mhsItem._isSyncing; renderAssessorDashboard(); Swal.fire('Gagal', res.message, 'error'); }
+                            else { if(mhsItem) delete mhsItem._isSyncing; renderAssessorDashboard(); Swal.fire('Gagal', res.message, 'error');
+                            }
+                        }).catch(function(err){
+                            if(mhsItem) delete mhsItem._isSyncing; renderAssessorDashboard(); Swal.fire('Error', err.message, 'error');
                         });
                     }
                 }
             });
         };
-
     })();
     </script>
 </body>
