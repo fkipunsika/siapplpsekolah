@@ -1126,9 +1126,18 @@ function renderDplReport() {
                 ];
             }
 
+            // PERBAIKAN: Ambil data draft SEBELUM menggambar HTML
+            var draftObj = {};
+            var mhsItem = appData.mhsList.find(function(x){return x.username === mhsUsername});
+            if (mhsItem) {
+                var draftStr = role === 'DPL' ? mhsItem.dpl_draft : mhsItem.gp_draft;
+                if (draftStr) {
+                    try { draftObj = JSON.parse(draftStr); } catch(e) { console.error('Error parsing draft:', e); }
+                }
+            }
+
             var acc = document.getElementById('accordionRubrics');
             acc.innerHTML = '';
-            
             requiredRubrics.forEach(function(req, index) {
                 var rub = DATA_RUBRIK[req.key];
                 if(!rub) return;
@@ -1142,10 +1151,8 @@ function renderDplReport() {
                         '<span><i class="fa-solid fa-list-check me-2"></i>'+escapeHTML(rub.title)+'</span>' +
                         '<span class="badge bg-secondary rub-badge" id="badge_'+req.key+'">0 / '+rub.items.length+' Terisi</span>' +
                         '</div></button></h2>';
-
                 html += '<div id="col_'+req.key+'" class="accordion-collapse collapse '+(isFirst?'show':'')+'" data-bs-parent="#accordionRubrics">' +
                         '<div class="accordion-body bg-white">';
-
                 rub.items.forEach(function(item, idx) {
                     var groupName = 'rb_' + req.key + '_' + item.id;
                     html += '<div class="mb-4 pb-3 border-bottom rub-item">' +
@@ -1156,8 +1163,12 @@ function renderDplReport() {
                         var scoreText = item['s'+score];
                         var radId = groupName + '_' + score;
                         var colorClass = score===4?'text-primary':(score===3?'text-success':(score===2?'text-warning':'text-danger'));
+                        
+                        // PERBAIKAN: Deteksi nilai tersimpan, lalu pasang atribut 'checked' langsung di HTML
+                        var isChecked = (draftObj[groupName] == score) ? 'checked' : '';
+                        
                         html += '<div class="col-md-3">' +
-                                '<input type="radio" class="btn-check rub-input" name="'+groupName+'" id="'+radId+'" value="'+score+'" data-parent="'+req.key+'" onchange="updateRubricBadge(\''+req.key+'\', '+rub.items.length+')">' +
+                                '<input type="radio" class="btn-check rub-input" name="'+groupName+'" id="'+radId+'" value="'+score+'" data-parent="'+req.key+'" onchange="updateRubricBadge(\''+req.key+'\', '+rub.items.length+')" ' + isChecked + '>' +
                                 '<label class="rubric-card p-3 w-100" for="'+radId+'">' +
                                 '<div class="fw-bold mb-1 '+colorClass+'">Skor '+score+'</div>' +
                                 '<small class="text-secondary d-block lh-sm" style="font-size:0.8rem;">'+escapeHTML(scoreText)+'</small>' +
@@ -1171,22 +1182,10 @@ function renderDplReport() {
                 acc.innerHTML += html;
             });
 
-            var mhsItem = appData.mhsList.find(function(x){return x.username === mhsUsername});
-            if (mhsItem) {
-                var draftStr = role === 'DPL' ? mhsItem.dpl_draft : mhsItem.gp_draft;
-                if (draftStr) {
-                    try {
-                        var draftObj = JSON.parse(draftStr);
-                        Object.keys(draftObj).forEach(function(key) {
-                            var el = document.getElementById(key + '_' + draftObj[key]);
-                            if (el) el.checked = true;
-                        });
-                        requiredRubrics.forEach(function(req) {
-                            updateRubricBadge(req.key, DATA_RUBRIK[req.key].items.length);
-                        });
-                    } catch(e) { console.error('Error parsing draft:', e); }
-                }
-            }
+            // Update badge hitungan "X / Y Terisi" setelah seluruh elemen HTML selesai tergambar
+            requiredRubrics.forEach(function(req) {
+                if(DATA_RUBRIK[req.key]) updateRubricBadge(req.key, DATA_RUBRIK[req.key].items.length);
+            });
 
             var m = new bootstrap.Modal(document.getElementById('modalNilai'));
             m.show();
