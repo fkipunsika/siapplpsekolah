@@ -74,6 +74,9 @@
                         <input type="password" id="password" class="form-control form-control-lg" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mb-3">Login Sistem</button>
+                    <div class="text-center mb-3">
+                        <a href="#" onclick="handleResetPassword(event)" class="text-decoration-none small fw-semibold text-primary">Lupa Password? (Reset ke Default)</a>
+                    </div>
                 </form>
 
                 <a href="https://drive.google.com/file/d/1yLcDybh_ARig2hs1WrmQJStvFCGVUofP/view?usp=drive_link" target="_blank" class="btn btn-outline-primary w-100 fw-bold">
@@ -484,7 +487,7 @@
         }
 
         // URL Web App dari Google Apps Script SIAP PLP
-        const API_URL = "https://script.google.com/macros/s/AKfycbzywKaxfYiMtc6otLX-2qHGneWsJHUFvJeLjP-hExDxQ4v9q6rl5Yv49iG4H_GfTqY/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxHn5UyEs8ODdtuHWMAWOehk-d4ZuT4rYj3Do9tB3sp_YjamuxMni6kx-DHxDRHimk/exec";
         
         // Mematikan mode simulasi saat di-hosting di GitHub (WAJIB ADA)
         window.google = window.google || {};
@@ -604,6 +607,35 @@
 
             document.getElementById('loginForm').addEventListener('submit', window.handleLogin);
             
+            window.handleResetPassword = function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Reset Password',
+                    text: 'Masukkan Username Anda untuk mereset password ke default (123456):',
+                    input: 'text',
+                    inputPlaceholder: 'Masukkan Username...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Reset Password',
+                    cancelButtonText: 'Batal',
+                    inputValidator: function(value) {
+                        if (!value) return 'Username tidak boleh kosong!';
+                    }
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        showFullPageLoading('Mereset password...');
+                        if(typeof google === 'undefined') {
+                            setTimeout(function(){ hideFullPageLoading(); Swal.fire('Berhasil', 'Password direset (Simulasi)', 'success'); }, 1000);
+                        } else {
+                            gasRun('resetUserPassword', result.value).then(function(res) {
+                                hideFullPageLoading();
+                                if (res.success) Swal.fire('Berhasil', 'Password berhasil direset ke 123456. Silakan login kembali.', 'success');
+                                else Swal.fire('Gagal', res.message, 'error');
+                            }).catch(function(err){ hideFullPageLoading(); Swal.fire('Error', err.message, 'error'); });
+                        }
+                    }
+                });
+            };
+
             var formGantiPw = document.getElementById('formGantiPassword');
             if(formGantiPw) formGantiPw.addEventListener('submit', function(e) {
                 e.preventDefault();
