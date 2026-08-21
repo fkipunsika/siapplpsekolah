@@ -521,7 +521,7 @@
         }
 
         // URL Web App dari Google Apps Script SIAP PLP
-        const API_URL = "https://script.google.com/macros/s/AKfycbxHn5UyEs8ODdtuHWMAWOehk-d4ZuT4rYj3Do9tB3sp_YjamuxMni6kx-DHxDRHimk/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwc7MlskKbypMJp6yPlpY3ZW3XWekcRHJ0uR2wFEvo-m_ej2LjuHOz1YtIzSmFbtg/exec";
         
         // Mematikan mode simulasi saat di-hosting di GitHub (WAJIB ADA)
         window.google = window.google || {};
@@ -535,15 +535,21 @@
                         .withFailureHandler(reject);
                     runner[funcName].apply(runner, args);
                 } else {
-                    fetch(API_URL, {
+                   fetch(API_URL, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'text/plain;charset=utf-8'
-                        },
-                        redirect: 'follow',
                         body: JSON.stringify({ funcName: funcName, args: args })
                     })
-                    .then(function(response) { return response.json(); })
+                    .then(function(response) {
+                        if (!response.ok) throw new Error("Gagal menghubungi server GAS.");
+                        return response.text();
+                    })
+                    .then(function(text) {
+                        try {
+                            return JSON.parse(text);
+                        } catch(e) {
+                            throw new Error("Penting: Deploy Web App harus diset 'Who has access: Anyone'.");
+                        }
+                    })
                     .then(function(res) {
                         if (res.error) reject(new Error(res.message));
                         else resolve(res.data);
