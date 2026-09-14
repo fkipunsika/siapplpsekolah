@@ -535,8 +535,14 @@
                         .withFailureHandler(reject);
                     runner[funcName].apply(runner, args);
                 } else {
-                   fetch(API_URL, {
+                    // Cache-buster mencegah Chrome memakai redirect deployment lama.
+                    var requestUrl = API_URL + (API_URL.indexOf('?') === -1 ? '?' : '&') + '_=' + Date.now();
+
+                    fetch(requestUrl, {
                         method: 'POST',
+                        mode: 'cors',
+                        credentials: 'omit',
+                        cache: 'no-store',
                         headers: {
                             'Content-Type': 'text/plain;charset=utf-8'
                         },
@@ -544,8 +550,25 @@
                         body: JSON.stringify({ funcName: funcName, args: args })
                     })
                     .then(function(response) {
-                        if (!response.ok) throw new Error("HTTP " + response.status);
-                        return response.json();
+                        return response.text().then(function(rawText) {
+                            if (!response.ok) {
+                                throw new Error(
+                                    'HTTP ' + response.status +
+                                    '\nURL akhir: ' + response.url +
+                                    (rawText ? '\nRespons: ' + rawText.substring(0, 300) : '')
+                                );
+                            }
+
+                            try {
+                                return JSON.parse(rawText);
+                            } catch (parseError) {
+                                throw new Error(
+                                    'Respons server bukan JSON.' +
+                                    '\nURL akhir: ' + response.url +
+                                    '\nRespons: ' + rawText.substring(0, 300)
+                                );
+                            }
+                        });
                     })
                     .then(function(res) {
                         if (res.error) reject(new Error(res.message));
