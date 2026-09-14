@@ -551,8 +551,9 @@
                         if (res.error) reject(new Error(res.message));
                         else resolve(res.data);
                     })
-                    .catch(function(err) { 
-                        reject(new Error("URL API Salah atau Akses Ditolak! Pastikan Anda sudah mengganti const API_URL dengan link Deploy Web App TERBARU dari project ini.")); 
+                    .catch(function(err) {
+                        console.error('API Error:', err);
+                        reject(err instanceof Error ? err : new Error(String(err)));
                     });
                 }
             });
@@ -817,10 +818,10 @@
                     } else {
                         Swal.fire('Gagal Memuat Data', res.message || 'Terjadi kesalahan tidak terduga.', 'error');
                     }
-                }).catch(function (err) {
-    console.error('API Error:', err);
-    reject(new Error(err.message || 'Gagal menghubungi server Apps Script.'));
-});
+                }).catch(function(err) {
+                    console.error(err);
+                    Swal.fire('Error Sistem', 'Gagal menghubungi server: ' + err.message, 'error');
+                });
             }
         }
 
